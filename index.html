@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<html lang="en">
+<head>
+    <title>netdata dashboard</title>
+    <meta name="application-name" content="netdata">
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="author" content="costa@tsaousis.gr">
+
+    <link rel="stylesheet" type="text/css" href="main.css?v=5">
+
+    <link rel="icon" href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAP9JREFUeNpiYBgFo+A/w34gpiZ8DzWzAYgNiHGAA5UdgA73g+2gcyhgg/0DGQoweB6IBQYyFCCOGOBQwBMd/xnW09ERDtgcoEBHB+zHFQrz6egIBUasocDAcJ9OxWAhE4YQI8MDILmATg7wZ8QRDfQKhQf4Cie6pAVGPA4AhQKo0BCgZRAw4ZSBpIWJNI6CD4wEKikBaFqgVSgcYMIrzcjwgcahcIGRiPYCLUPBkNhWUwP9akVcoQBpatG4MsLviAIqWj6f3Absfdq2igg7IIEKDVQKEzN5ofAenJCp1I8gJRTug5tfkGIdR1FDniMI+QZUjF8Amn5htOdHCAAEGACE6B0cS6mrEwAAAABJRU5ErkJggg==" />
+
+    <meta property="og:locale"             content="en_US" />
+    <meta property="og:url"                content="https://my-netdata.io" />
+    <meta property="og:type"               content="website" />
+    <meta property="og:site_name"          content="netdata"/>
+    <meta property="og:title"              content="Get control of your Linux Servers. Simple. Effective. Awesome." />
+    <meta property="og:description"        content="Unparalleled insights, in real-time, of everything happening on your Linux systems and applications, with stunning, interactive web dashboards and powerful performance and health alarms." />
+    <meta property="og:image"              content="https://cloud.githubusercontent.com/assets/2662304/22945737/e98cd0c6-f2fd-11e6-96f1-5501934b0955.png" />
+    <meta property="og:image:type"         content="image/png" />
+    <meta property="fb:app_id"             content="1200089276712916" />
+
+    <meta name="twitter:card"              content="summary" />
+    <meta name="twitter:site"              content="@linuxnetdata" />
+    <meta name="twitter:title"             content="Get control of your Linux Servers. Simple. Effective. Awesome." />
+    <meta name="twitter:description"       content="Unparalleled insights, in real-time, of everything happening on your Linux systems and applications, with stunning, interactive web dashboards and powerful performance and health alarms." />
+    <meta name="twitter:image"             content="https://cloud.githubusercontent.com/assets/2662304/14092712/93b039ea-f551-11e5-822c-beadbf2b2a2e.gif" />
+
+    <script src="main.js?v20190905-0"></script>
+</head>
+
+<body data-spy="scroll" data-target="#sidebar" data-offset="100">
+    <div id="loadOverlay" class="loadOverlay" style="background-color: #fff; color: #888;">
+        <div style="font-size: 3vh;">
+            您必须启用 JavaScript 才能使用 Netdata！<br />
+            您可以在<a href="https://enable-javascript.com/" target="_blank">浏览器设置</a>中进行此操作。
+        </div>
+    </div>
+    <script type="text/javascript">
+        // Cleanup JS warning.
+        document.documentElement.style.overflowY = "scroll";
+
+        // Change the loadOverlay colors ASAP to match the theme.
+        let theme;
+        const hash = document.location.hash;
+        if (hash.includes('theme=slate')) {
+            theme = 'slate';
+        } else if (hash.includes('theme=white')) {
+            theme = 'white';
+        } else {
+            theme = localStorage.getItem('netdataTheme') || 'slate';
+        }
+        const overlayEl = document.getElementById('loadOverlay');
+        overlayEl.innerHTML = 'netdata<br/><div style="font-size: 3vh;">Real-time performance monitoring, done right!</div>';
+        overlayEl.style = theme == 'slate' ? "background-color: #272b30; color: #373b40;" : "background-color: #fff; color: #ddd;";
+    </script>
+    <nav class="navbar navbar-default navbar-fixed-top" role="banner">
+        <div class="container">
+            <div class="navbar-header">
+                <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">切换导航</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <ul class="nav navbar-nav" style="display: inline-block">
+                    <li data-placement="right" class="hidden-xs hidden-sm" style="line-height: 50px; margin-right: 15px" title="Netdata代理">
+                        <img src="images/netdata-logomark.svg" height="32"/>
+                    </li>
+                    <li class="dropdown" id="myNetdataDropdownParent" title="您的其他netdata服务器" data-toggle="tooltip" data-placement="right">
+                        <a href="#" id="hostname" class="dropdown-toggle" data-toggle="dropdown">
+                            我的netdata
+                            <strong class="caret"></strong>
+                        </a>
+                        <div id="my-netdata-dropdown-content" class="dropdown-menu scrollable-menu inpagemenu">
+                            <div class="agent-item" style="white-space: nowrap">
+                                <i class="fas fa-hourglass-half"></i>
+                                加载中，请稍候...
+                                <div></div>
+                            </div>                            
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <nav class="collapse navbar-collapse navbar-right" role="navigation">
+                <ul class="nav navbar-nav">
+                    <li title="节点视图" data-toggle="tooltip" data-placement="bottom"><a onclick="openAuthenticatedUrl('console.html');" class="btn" target="_blank"><i class="fas fa-tv"></i>&nbsp;<span class="hidden-sm hidden-md">节点<sup class="beta"> 测试版</sup></span></a></li>
+                    <li id="alarmsButton"  title="检查健康监控警报及其日志" data-toggle="tooltip" data-placement="bottom"><a href="#" class="btn" data-toggle="modal" data-target="#alarmsModal"><i class="fas fa-bell"></i>&nbsp;<span class="hidden-sm hidden-md">警报&nbsp;</span><span id="alarms_count_badge" class="badge"></span></a></li>
+                    <li title="更改仪表板设置" data-toggle="tooltip" data-placement="bottom"><a href="#" class="btn" data-toggle="modal" data-target="#optionsModal"><i class="fas fa-cog"></i>&nbsp;<span class="hidden-sm hidden-md">设置</span></a></li>
+                    <!--
+                    <li title="检查 netdata 更新<br/>您应该保持 netdata 更新" data-toggle="tooltip" data-placement="bottom" class="hidden-sm" id="updateButton"><a href="#" class="btn" data-toggle="modal" data-target="#updateModal"><i class="fas fa-cloud-download-alt"></i> <span class="hidden-sm hidden-md">更新 </span><span id="update_badge" class="badge"></span></a></li>
+                    -->
+                    <!--
+                    <li title="netdata 在 github 上的 wiki 主页<br/>记得<b>给 netdata 一个 <i class=&quot;fas fa-star&quot;></i></b> ！" data-toggle="tooltip" data-placement="bottom" class="hidden-xs hidden-sm hidden-md"><a href="https://github.com/netdata/netdata" class="btn" target="_blank"><i class="fab fa-github"></i></a></li>
+                    <li title="在 twitter 上关注 netdata" data-toggle="tooltip" data-placement="bottom" class="hidden-xs hidden-sm hidden-md"><a href="https://twitter.com/linuxnetdata" class="btn" target="_blank"><i class="fab fa-twitter"></i></a></li>
+                    <li title="在 facebook 上点赞 netdata" data-toggle="tooltip" data-placement="bottom" class="hidden-xs hidden-sm hidden-md"><a href="https://www.facebook.com/linuxnetdata/" class="btn" target="_blank"><i class="fab fa-facebook"></i></a></li>
+                    -->
+                    <li title="导入/加载 netdata 快照" data-toggle="tooltip" data-placement="bottom" id="loadButton"><a href="#" class="btn" data-toggle="modal" data-target="#loadSnapshotModal"><i class="fas fa-download"></i>&nbsp;<span class="hidden-sm hidden-md hidden-lg">导入</span></a></li>
+                    <li title="导出/保存 netdata 快照" data-toggle="tooltip" data-placement="bottom" id="saveButton"><a href="#" class="btn" data-toggle="modal" data-target="#saveSnapshotModal"><i class="fas fa-upload"></i>&nbsp;<span class="hidden-sm hidden-md hidden-lg">导出</span></a></li>
+                    <li title="将此仪表板打印为 PDF" data-toggle="tooltip" data-placement="bottom" id="printButton"><a href="#" class="btn" data-toggle="modal" data-target="#printPreflightModal"><i class="fas fa-print"></i>&nbsp;<span class="hidden-sm hidden-md hidden-lg">打印</span></a></li>
+                    <li title="获取有关使用图表的帮助" data-toggle="tooltip" data-placement="bottom" class="hidden-sm"><a href="#" class="btn" data-toggle="modal" data-target="#helpModal"><i class="fas fa-question-circle"></i>&nbsp;<span class="hidden-sm hidden-md">帮助</span></a></li>
+                    <li id="account-menu-container" class="dropdown" data-toggle="tooltip"></li>
+                </ul>
+            </nav>
+        </div>
+    </nav>
+    <div class="navbar-highlight">
+        <div id="navbar-highlight-content" class="navbar-highlight-content"></div>
+    </div>
+
+<!--
+    <div id="sign-in-banner" style="display: none">
+        <div class="container">
+            Like what you see? 
+            <strong><a href="#" class="__link" onclick="signInDidClick(event); return false">Sign in</a> 
+            to experience the full-range of netdata capabilities!</strong>
+            <div class="__close" onclick="closeSignInBannerDidClick(event)">
+                Close <i class="fas fa-times"></i>
+            </div>
+        </div>
+    </div>
+-->
+    
+    <div id="masthead" style="display: none;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-7">
+                    <h1>Netdata
+                        <p class="lead">实时性能监控，尽可能详细</p>
+                    </h1>
+                </div>
+                <div class="col-md-5">
+                    <div class="well well-lg">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <b>拖动</b>图表进行平移。
+                                <b>Shift + 滚轮</b>进行缩放。
+                                <b>双击</b>进行重置。
+                                <b>悬停</b>也可以！
+                            </div>
+                            <div class="col-md-6">
+                                <div class="netdata-container" data-netdata="system.intr" data-chart-library="dygraph" data-dygraph-theme="sparkline" data-dygraph-type="line" data-dygraph-strokewidth="3" data-dygraph-smooth="true" data-dygraph-highlightcirclesize="6" data-after="-90" data-height="60px" data-colors="#C66"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="charts-body" role="main">
+                <div id="charts_div"></div>
+            </div>
+            <div class="sidebar-body hidden-xs hidden-sm hidden-print" id="sidebar-body" role="complementary">
+                <nav class="dashboard-sidebar hidden-print hidden-xs hidden-sm" id="sidebar" role="menu"></nav>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer" class="container" style="display: none;">
+        <div class="row">
+            <div class="col-md-10" role="main">
+                <div class="p">
+                    <big><a href="https://github.com/netdata/netdata/wiki" target="_blank">Netdata</a></big>
+                    <br /><br />
+                    <i class="fas fa-copyright"></i> Copyright 2018, <a href="mailto:info@netdata.cloud">Netdata, Inc</a>.<br/>
+                    <i class="fas fa-copyright"></i> Copyright 2016-2018, <a href="mailto:costa@tsaousis.gr">Costa Tsaousis</a>.<br/>
+                </div>
+                <div class="p">
+                    Released under <a href="http://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank">GPL v3 or later</a>.
+                    Netdata uses <a href="https://github.com/netdata/netdata/blob/master/REDISTRIBUTED.md" target="_blank">third party tools</a>.
+                    <br /><br />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="xssModal" tabindex="-1" role="dialog" aria-labelledby="xssModalLabel" data-keyboard="false" data-backdrop="static" style="z-index: 3000">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="xssModalLabel">XSS防护</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        此仪表板即将从服务器渲染数据：
+                    </p>
+                    <p style="font-size: 1.25em;">
+                        <code id="netdataXssModalServer"></code>
+                    </p>
+                    <p>
+                        为了保护您的隐私，仪表板将<b>检查所有传输的数据</b>，以防止跨站脚本攻击（XSS）。
+                        <br/>这会消耗CPU资源，因此您的浏览器可能会变慢一些。
+                    </p>
+                    <p>
+                        如果您<b>信任</b>远程服务器，可以禁用XSS防护。<br/>
+                        在这种情况下，任何远程仪表板装饰代码（JavaScript）也将运行。
+                    </p>
+                    <p>
+                        如果您<b>不信任</b>远程服务器，应该保持防护开启。<br/>
+                        仪表板运行速度会变慢，远程仪表板装饰代码将不会运行，但安全起见还是这样做比较好…
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" onclick="return xssModalKeepXss();" type="button" class="btn btn-success" data-dismiss="modal">继续保护我</a>
+                    <a href="#" onclick="return xssModalDisableXss();" type="button" class="btn btn-danger" data-dismiss="modal">我不需要，服务器是我的</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="printPreflightModal" tabindex="-1" role="dialog" aria-labelledby="printPreflightModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="printPreflightModalLabel">打印此 netdata 仪表板</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        netdata 仪表板无法被捕获，因为我们正在延迟加载和隐藏除可见图表之外的所有内容。
+                        <br/>
+                        要捕获整个页面以呈现所有图表，将弹出一个新的浏览器窗口，该窗口将一次性呈现所有图表。
+                        新的浏览器窗口将保持图表的当前平移和缩放设置。因此，请在继续之前对齐图表。
+                    </p>
+                    <p>
+                        <small>
+                            此过程将在您的浏览器上施加一些 CPU 和内存压力。<br/>
+                            对于 netdata 服务器，我们将按顺序下载所有图表，以避免拥塞网络和服务器资源。<br/>
+                            <b>请不要将 netdata 仪表板打印在纸上！</b>
+                        </small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" onclick="printPreflight(); return false;" type="button" class="btn btn-default">打印</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="printModal" tabindex="-1" role="dialog" aria-labelledby="printModalLabel" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="printModalLabel">准备打印仪表盘...</h4>
+                </div>
+                <div class="modal-body">
+                    请稍候，我们正在初始化和渲染仪表盘上的所有图表。
+                    <div class="progress progress-striped active" style="height: 2em !important;">
+                        <div id="printModalProgressBar" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+                            <span id="printModalProgressBarText" style="padding-left: 10px; padding-top: 4px; font-size: 1.2em; text-align: left; width: 100%; position: absolute; display: block; color: black;"></span>
+                        </div>
+                    </div>
+                    当我们完成页面渲染后，打印对话框将立即出现。
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loadSnapshotModal" tabindex="-1" role="dialog" aria-labelledby="loadSnapshotModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="loadSnapshotModalLabel">导入 netdata 快照</h4>
+                </div>
+                <div id="loadSnapshotDragAndDrop" class="modal-body">
+                    <p>
+                        netdata 可以导出和导入仪表板快照。
+                        任何 netdata 都可以导入任何其他 netdata 的快照。
+                        这些快照不会上传到服务器。它们完全由您的网络浏览器在您的计算机上处理。
+                    </p>
+                    <p style="text-align: center;">
+                        <label class="btn btn-default">
+                            点击此处选择要导入的 netdata 快照文件
+                            <input type="file" id="loadSnapshotSelectFiles" value="Import" style="display: none;"
+                                   onchange="loadSnapshotPreflight();">
+                        </label>
+                    </p>
+                    <div id="loadSnapshotStatus" class="alert alert-info" role="alert">
+                        浏览快照文件（或将其拖放到此处），然后点击 <b>导入</b> 以渲染它。
+                    </div>
+                    <p>
+                        <table class="table">
+                        <tbody>
+                            <tr><th>文件名</th><td id="loadSnapshotFilename"></td></tr>
+                            <tr><th>主机名</th><td id="loadSnapshotHostname"></td></tr>
+                            <tr><th>原始 URL</th><td id="loadSnapshotURL"></td></tr>
+                            <tr><th>图表信息</th><td id="loadSnapshotCharts"></td></tr>
+                            <tr><th>快照信息</th><td id="loadSnapshotInfo"></td></tr>
+                            <tr><th>时间范围</th><td id="loadSnapshotTimeRange"></td></tr>
+                            <tr><th>评论</th><td id="loadSnapshotComments"></td></tr>
+                        </tbody>
+                        </table>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <span style="display: inline-block; padding-right: 20px;">快照文件包含数据和 JavaScript 代码。确保 <b>您信任要导入的文件</b>！</span>
+                    <a id="loadSnapshotImport" href="#" onclick="loadSnapshot(); return false;" type="button" class="btn btn-success disabled">导入</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="saveSnapshotModal" tabindex="-1" role="dialog" aria-labelledby="saveSnapshotModalLabel" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="saveSnapshotModalLabel">导出快照</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="saveSnapshotModalProgressSection" hidden>
+                        请稍候，我们正在收集仪表板数据...
+                        <div class="progress progress-striped active" style="height: 2em !important;">
+                            <div id="saveSnapshotModalProgressBar" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="min-width: 2em;">
+                                <span id="saveSnapshotModalProgressBarText" style="padding-left: 10px; padding-top: 4px; font-size: 1.2em; text-align: left; width: 100%; position: absolute; display: block;"></span>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div id="saveSnapshotResolutionRadio" style="text-align: center;">
+                        选择快照的期望分辨率。这是<b>每个点的数据秒数</b>。
+                        <br/>
+                        &nbsp;
+                        <br/>
+                        &nbsp;
+                        <br/>
+                        <input id="saveSnapshotResolutionSlider" data-slider-id='saveSnapshotResolutionSlider' type="text" style="width: 80%;" tabindex="0"/>
+                        <br/>&nbsp;<br/>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="sizing-saveSnapshotFilename" style="width: 100px;">文件名</span>
+                            <input id="saveSnapshotFilename" class="form-control" placeholder="生成快照的文件名" aria-describedby="sizing-saveSnapshotFilename" tabindex="2"/>
+                            <div class="input-group-btn">
+                                <div class="input-group-btn">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span id="saveSnapshotCompressionName">压缩</span> <span class="caret"></span></button>
+                                    <ul class="dropdown-menu dropdown-menu-right">
+                                        <li class="disabled"><a href="#" class="disabled">选择压缩方式</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('none'); return false;">未压缩</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('pako.deflate'); return false;">pako.deflate (gzip, 二进制)</a></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('pako.deflate.base64'); return false;">pako.deflate.base64 (gzip, ASCII)</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('lzstring.uri'); return false;">lzstring.uri (LZ, ASCII)</a></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('lzstring.utf16'); return false;">lzstring.utf16 (LZ, UTF16)</a></li>
+                                        <li><a href="#" onclick="saveSnapshotSetCompression('lzstring.base64'); return false;">lzstring.base64 (LZ, ASCII)</a></li>
+                                    </ul>
+                                </div><!-- /btn-group -->
+                            </div>
+                        </div>
+                        <div class="input-group" style="padding-top: 10px; width: 100%">
+                            <span class="input-group-addon" id="sizing-saveSnapshotComments" style="width: 100px;">备注</span>
+                            <input id="saveSnapshotComments" class="form-control" placeholder="关于此快照的任何评论？" aria-describedby="sizing-saveSnapshotComments" tabindex="3"/>
+                        </div>
+                    </div>
+                
+                    &nbsp;
+                    <div id="saveSnapshotStatus" class="alert alert-info" role="alert">
+                        选择快照分辨率。这将控制快照文件的大小。
+                    </div>
+                    <p>
+                        生成的快照将包括此仪表板的所有图表，<b>对于可见的时间范围</b>，因此需要根据需要对图表进行对齐、平移和缩放。
+                        仪表板的滚动位置也将被保存。
+                        快照将作为文件下载到您的计算机，可以导入到任何 netdata 仪表板中（无需在此服务器上重新导入）。
+                    </p>
+                    <p>
+                        <small>
+                            快照文件包括仪表板的所有信息，包括原始服务器的 URL、其 netdata 唯一 ID 等。
+                            因此，如果您与第三方共享快照文件，他们将能够访问原始服务器，如果此服务器在互联网上是公开的。
+                            <br/>
+                            快照完全由 Web 浏览器处理。netdata 服务器不知道它们的存在。
+                        </small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a id="saveSnapshotExport" href="#" onclick="saveSnapshot(); return false;" type="button" class="btn btn-success"  tabindex="4">导出</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal" tabindex="5">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="welcomeModal" tabindex="-1" role="dialog" aria-labelledby="welcomeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="welcomeModalLabel">欢迎来到netdata的世界</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="p">
+                        <div style="width: 100%; text-align: center; padding-top: 10px; padding-bottom: 10px; font-size: 18px;">
+                            如果有某个指标，我们希望将其可视化<br/>
+                            并且我们希望这种可视化是<strong>实时</strong>的，<strong>高效</strong>的和<strong>令人惊叹</strong>的
+                        </div>
+                    </div>
+                    <div class="p">
+                        <b><a href="https://github.com/netdata/netdata/wiki" target="_blank">netdata</a></b>
+                        是一种监控系统和应用程序的新方式，可以获得<strong>实时洞察</strong>，了解到真正发生的事情以及对性能产生的影响。
+                        它经过精心优化，是一个实时系统，不会以任何方式干扰您系统的核心功能。
+                    </div>
+                    <div class="p">
+                        <b><a href="https://github.com/netdata/netdata/wiki" target="_blank">netdata</a></b>
+                        已经被设计用于监控<strong>每秒每台服务器的大量指标</strong>。
+                        安装后，可能会出现1k到3k个指标，但我们已经测试了10万个指标，每秒收集一次，仍然CPU利用率可以忽略不计。
+                        <br/>
+                        我们还尝试为每个指标赋予意义和上下文。
+                        我们将所有指标分组和分类到有意义的图表中，提供对底层技术和机制的更好理解。
+                    </div>
+                    <div class="p">
+                        <b><a href="https://github.com/netdata/netdata/wiki" target="_blank">netdata</a></b>是免费的，
+                        开源软件。如果您决定使用它，
+                        <strong><a href="https://github.com/netdata/netdata/tree/master/docs/a-github-star-is-important.md" target="_blank">在GitHub上给netdata点个星是很重要的</a></strong>。
+                    </div>
+                    <div class="p">
+                        享受实时性能监控吧！
+                    </div>
+                    <div class="p">
+                        Costa Tsaousis
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="helpModalLabel">仪表板帮助</h4>
+                </div>
+                <div class="modal-body">
+        
+                    <h4>Dygraphs（线条、区域和堆叠区域图表）</h4>
+        
+                    <!-- 导航标签 -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#help_mouse" aria-controls="help_mouse" role="tab" data-toggle="tab">鼠标界面</a></li>
+                        <li role="presentation"><a href="#help_touch" aria-controls="help_touch" role="tab" data-toggle="tab">触摸界面</a></li>
+                    </ul>
+        
+                    <!-- 标签内容 -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="help_mouse">
+                            <div class="p">
+                                <h4>鼠标悬停</h4>
+                                鼠标悬停在图表上，会在图例中显示鼠标下的时间戳的值（图表也会突出显示该点）。
+                                <br/>
+                                所有其他可见的图表也会显示并突出显示相同时间戳的值。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>拖动图表内容</h4>
+                                按住鼠标左键并移动鼠标，可以水平拖动图表内容。
+                                <br/>
+                                所有图表会在您松开鼠标后立即跟随移动（这种小延迟是设计好的：它可以加快浏览器速度，让您专注于您正在探索的内容）。
+                                <br/>
+                                一旦图表被拖动，所有图表的自动刷新都会停止。要再次启用自动刷新，<b>双击</b>一个被拖动的图表。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>双击</h4>
+                                双击一个图表可以将所有图表重置为它们的默认自动刷新状态。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>SHIFT + 拖动</h4>
+                                在按住<code>SHIFT</code>键的同时，按住图表内容的左键并移动鼠标以选择一个区域进行放大。其他图表也会跟随放大。放大分为两个阶段：
+                                <ul>
+                                    <li>已加载的图表内容被放大（低分辨率）</li>
+                                    <li>新数据从netdata服务器传输，以刷新可能更详细的图表。</li>
+                                </ul>
+                                一旦图表被放大，所有图表的自动刷新都会停止。要再次启用自动刷新，<b>双击</b>一个被放大的图表。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>突出显示时间范围</h4>
+                                在按住<code>ALT</code>键的同时，按住图表内容的左键并移动鼠标以选择一个区域。所选区域将在所有图表上突出显示。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>SHIFT + 鼠标滚轮</h4>
+                                在按住<code>SHIFT</code>键的同时，鼠标指针位于图表内容上时，滚动鼠标滚轮可以放大或缩小。这种放大会对齐到鼠标指针下方的中心。其他图表也会跟随放大。
+                                <br/>
+                                一旦图表被放大，所有图表的自动刷新都会停止。要再次启用自动刷新，<b>双击</b>一个被放大的图表。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>图例操作</h4>
+                                单击维度的标签或值，将选择/取消选择该维度。
+                                <br/>
+                                您可以按住SHIFT或CONTROL键中的任意一个，然后单击图例标签或值，以选择/取消选择多个维度。
+                            </div>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="help_touch">
+                            <div class="p">
+                                <h4>单击</h4>
+                                单击图表内容，可以在图例中显示单击的时间戳的值（图表也会突出显示该点）。
+                                <br/>
+                                所有其他可见的图表也会显示并突出显示相同时间戳的值。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>拖动图表内容</h4>
+                                触摸并拖动图表内容以水平移动。
+                                <br/>
+                                所有图表会在您松开触摸后立即跟随移动（这种小延迟是设计好的：它可以加快浏览器速度，让您专注于您正在探索的内容）。
+                                <br/>
+                                一旦图表被拖动，所有图表的自动刷新都会停止。要再次启用自动刷新，<b>双击</b>一个被拖动的图表。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>双击</h4>
+                                双击一个图表可以将所有图表重置为它们的默认自动刷新状态。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>缩放<small>（在firefox和IE/Edge上不起作用）</small></h4>
+                                使用两个手指，可以放大或缩小。
+                                <br/>
+                                一旦图表被放大，所有图表的自动刷新都会停止。要再次启用自动刷新，<b>双击</b>一个被放大的图表。
+                            </div>
+                            <hr/>
+                            <div class="p">
+                                <h4>图例操作</h4>
+                                点击维度的标签或值，将选择/取消选择该维度。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alarmsModal" tabindex="-1" role="dialog" aria-labelledby="alarmsModalLabel">
+        <div class="modal-dialog modal-lg" role="document"  style="display: table;"> <!-- 允许模态框水平扩展 -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="alarmsModalLabel">netdata警报</h4>
+                </div>
+                <div class="modal-body">
+                    <!-- 导航标签 -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#alarms_active" aria-controls="alarms_active" role="tab" data-toggle="tab">活动</a></li>
+                        <li role="presentation"><a href="#alarms_all" aria-controls="alarms_all" role="tab" data-toggle="tab">全部</a></li>
+                        <li role="presentation"><a href="#alarms_log" aria-controls="alarms_log" role="tab" data-toggle="tab">日志</a></li>
+                    </ul>
+
+                    <!-- 标签面板 -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="alarms_active">
+                            加载中...
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="alarms_all">
+                            加载中...
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="alarms_log">
+                            加载中...
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- <a href="#" onclick="alarmsUpdateModal(); return false;" type="button" class="btn btn-default">更新</a> -->
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="optionsModal" tabindex="-1" role="dialog" aria-labelledby="optionsModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="optionsModalLabel">netdata 仪表板选项</h4>
+                </div>
+                <div class="modal-body">
+                    <center>
+                        <small style="color: #BBBBBB;">这些是浏览器设置。每个查看者都有自己的设置。它们不会影响您的 netdata 服务器的运行。
+                        <br/>
+                        设置立即生效，并永久保存到浏览器本地存储（除了在焦点上刷新/始终选项）。
+                        <br/>
+                        要将所有选项（包括图表大小）重置为默认设置，请单击<a href="#" onclick="resetDashboardOptions(); return false;">此处</a>。</small>
+                    </center>
+                    <div style="padding: 10px;"></div>
+                
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active"><a href="#settings_performance" aria-controls="settings_performance" role="tab" data-toggle="tab">性能</a></li>
+                        <li role="presentation"><a href="#settings_sync" aria-controls="settings_sync" role="tab" data-toggle="tab">同步</a></li>
+                        <li role="presentation"><a href="#settings_visual" aria-controls="settings_visual" role="tab" data-toggle="tab">视觉</a></li>
+                        <li role="presentation"><a href="#settings_locale" aria-controls="settings_locale" role="tab" data-toggle="tab">区域设置</a></li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="settings_performance">
+                            <form id="optionsForm1" method="get" class="form-horizontal">
+                                <div class="form-group">
+                                    <table>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="stop_updates_when_focus_is_lost" type="checkbox" checked data-toggle="toggle" data-offstyle="danger" data-onstyle="success" data-on="在焦点时" data-off="始终" data-width="110px"></td>
+                                            <td class="option-info"><strong>何时刷新图表？</strong><br/>
+                                                <small>当设置为 <b>在焦点时</b> 时，如果页面/标签没有用户的焦点，图表将停止更新。当设置为 <b>始终</b> 时，图表将始终刷新。将其设置为 <b>在焦点时</b> 可以降低浏览器的 CPU 要求（并延长笔记本电脑和平板电脑的电池寿命），当此页面没有您的焦点时。设置为 <b>始终</b> 可以在另一个窗口工作（即更改某些设置），并使图表在此窗口自动刷新。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control">
+                                                <input id="eliminate_zero_dimensions" type="checkbox" checked data-toggle="toggle" data-on="非零" data-off="全部" data-width="110px">
+                                            </td>
+                                            <td class="option-info"><strong>显示哪些维度？</strong><br/>
+                                                <small>当设置为 <b>非零</b> 时，当前视图中所有值均为零的维度将不会从 netdata 服务器传输（除非图表的所有维度都为零，在这种情况下此设置无效 - 所有维度都会被传输和显示）。当设置为 <b>全部</b> 时，将始终显示所有维度。将其设置为 <b>非零</b> 可以降低 netdata 与浏览器之间的数据传输量，降低浏览器的 CPU 要求（减少要绘制的行数），并增加对图例的关注（图例中的条目减少）。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="destroy_on_hide" type="checkbox" data-toggle="toggle" data-on="销毁" data-off="隐藏" data-width="110px"></td>
+                                            <td class="option-info"><strong>如何处理隐藏的图表？</strong><br/>
+                                                <small>当设置为 <b>销毁</b> 时，不在浏览器的当前视口中的图表（在页面的可见区域之上或之下）将被销毁，并在再次变为可见时重新创建。当设置为 <b>隐藏</b> 时，不可见的图表将仅被隐藏，以简化 DOM 并加快浏览器的速度。将其设置为 <b>销毁</b> 可以降低浏览器的内存要求。将其设置为 <b>隐藏</b> 可以加快页面滚动时图表的恢复速度。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="async_on_scroll" type="checkbox" data-toggle="toggle" data-on="异步" data-off="同步" data-width="110px"></td>
+                                            <td class="option-info"><strong>页面滚动处理？</strong><br/>
+                                                <small>当设置为 <b>同步</b> 时，页面滚动后立即检查图表的可见性。在较慢的计算机上，这可能会影响页面滚动的流畅性。要在滚动结束时更新页面，请将其设置为 <b>异步</b>。将其设置为 <b>同步</b> 可以在滚动时立即更新图表。将其设置为 <b>异步</b> 可以在较慢的计算机上实现更流畅的页面滚动。</small>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="settings_sync">
+                            <form id="optionsForm2" method="get" class="form-horizontal">
+                                <div class="form-group">
+                                    <table>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="parallel_refresher" type="checkbox" checked data-toggle="toggle" data-on="并行" data-off="顺序" data-width="110px"></td>
+                                            <td class="option-info"><strong>使用哪种图表刷新策略？</strong><br/>
+                                                <small>当设置为 <b>并行</b> 时，可见的图表将并行刷新（所有查询都会并行发送到 netdata 服务器），并且会异步渲染。当设置为 <b>顺序</b> 时，图表将一个接一个地刷新。如果您的浏览器可以处理，将其设置为并行（大多数现代浏览器都可以），如果您使用的是较旧/较慢的计算机，则将其设置为顺序。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row" id="concurrent_refreshes_row">
+                                            <td class="option-control"><input id="concurrent_refreshes" type="checkbox" checked data-toggle="toggle" data-on="重新同步" data-off="尽力而为" data-width="110px"></td>
+                                            <td class="option-info"><strong>是否重新同步图表刷新？</strong><br/>
+                                                <small>当设置为 <b>重新同步</b> 时，仪表板将尝试重新同步所有图表，以便它们同时刷新。当设置为 <b>尽力而为</b> 时，每个图表可能会在稍有时间差的情况下刷新。通常，仪表板会并行开始刷新它们，但是根据计算机的速度和网络延迟，图表开始出现轻微的时间差。将其设置为 <b>重新同步</b> 将尝试在每次更新时重新同步图表。将其设置为 <b>尽力而为</b> 可能会降低浏览器和网络的压力。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="sync_selection" type="checkbox" checked data-toggle="toggle" data-on="同步" data-off="不同步" data-onstyle="success" data-offstyle="danger" data-width="110px"></td>
+                                            <td class="option-info"><strong>在所有图表上同步悬停选择？</strong><br/>
+                                                <small>启用后，对一个图表的选择将自动选择所有其他可见图表上的相同时间，并更新所有可见图表的图例以显示所选值。禁用后，只有获得用户注意力的图表将被选择。启用它以更好地了解数据。如果您的计算机非常慢，无法实际执行此操作，则禁用它。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="sync_pan_and_zoom" type="checkbox" checked data-toggle="toggle"  data-on="同步" data-off="不同步" data-onstyle="success" data-offstyle="danger" data-width="110px"></td>
+                                            <td class="option-info"><strong>在所有图表上同步平移和缩放？</strong><br/>
+                                                <small>启用后，对图表的平移和缩放操作将被复制到所有图表（甚至是当前不可见的图表 - 当然，只有当它们将变为可见时）。禁用后，平移和缩放操作将不会传播到其他图表。</small>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="settings_visual">
+                            <form id="optionsForm3" method="get" class="form-horizontal">
+                                <div class="form-group">
+                                    <table>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="netdata_theme_control" type="checkbox" checked data-toggle="toggle" data-offstyle="danger" data-onstyle="success" data-on="暗色" data-off="白色" data-width="110px"></td>
+                                            <td class="option-info"><strong>使用哪种主题？</strong><br/>
+                                                <small>Netdata提供两种主题：<b>暗色</b>（默认）和<b>白色</b>。
+                                                <br/>
+                                                <b>切换此选项将重新加载仪表板</b>。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="show_help" type="checkbox" checked data-toggle="toggle" data-on="帮助我" data-off="无帮助" data-width="110px"></td>
+                                            <td class="option-info"><strong>您需要帮助吗？</strong><br/>
+                                                <small>Netdata可以在某些区域显示一些帮助信息，以帮助您使用仪表板。如果所有这些提示框都打扰到您，可以使用此开关禁用它们。
+                                                <br/>
+                                                <b>切换此选项将重新加载仪表板</b>。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="pan_and_zoom_data_padding" type="checkbox" checked data-toggle="toggle"  data-on="填充" data-off="不填充" data-width="110px"></td>
+                                            <td class="option-info"><strong>在平移和缩放时启用数据填充？</strong><br/>
+                                                <small>当设置为<b>填充</b>时，图表将在可见区域之前和之后填充更多的数据，从而给人一种整个数据库都已加载的印象。此填充仅在图表的第一次平移或缩放操作之后发生（最初，所有图表只有可见数据）。当设置为<b>不填充</b>时，即使在第一次平移和缩放操作之后，也只会从netdata服务器传输可见数据。</small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="smooth_plot" type="checkbox" checked data-toggle="toggle"  data-on="平滑" data-off="粗糙" data-width="110px"></td>
+                                            <td class="option-info"><strong>在图表上启用贝塞尔曲线？</strong><br/>
+                                                <small>当设置为<b>平滑</b>时，支持的图表库将绘制平滑曲线，而不是简单的直线连接点。
+                                                <br/>
+                                                请注意，netdata仪表板中的主要图表库<a href="http://dygraphs.com" target="_blank">dygraphs</a>只能平滑线图表，无法平滑区域或堆叠图表。当设置为<b>粗糙</b>时，此设置可以降低浏览器消耗的CPU资源。</small>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="settings_locale">
+                            <form id="optionsForm4" method="get" class="form-horizontal">
+                                <div class="form-group">
+                                    <table>
+                                        <tr class="option-row">
+                                            <td colspan="2" align="center">
+                                                <small>
+                                                    <b>这些设置会逐渐应用，随着图表的更新。要立即应用这些设置，请刷新仪表板</b>。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="units_conversion" type="checkbox" checked data-toggle="toggle"  data-on="单位缩放" data-off="固定单位" data-onstyle="success" data-width="110px"></td>
+                                            <td class="option-info"><strong>启用选择单位的自动缩放？</strong><br/>
+                                                <small>当设置为 <b>单位缩放</b> 时，显示的值将动态缩放（例如，1000千比特将显示为1兆比特）。
+                                                    Netdata可以自动缩放这些原始单位：<code>千比特/秒</code>，<code>千字节/秒</code>，<code>KB/秒</code>，
+                                                    <code>KB</code>，<code>MB</code>和<code>GB</code>。
+                                                    当设置为 <b>固定单位</b> 时，所有值将使用netdata服务器维护的原始单位呈现。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr id="settingsLocaleTempRow" class="option-row">
+                                            <td class="option-control"><input id="units_temp" type="checkbox" checked data-toggle="toggle"  data-on="摄氏度" data-off="华氏度" data-width="110px"></td>
+                                            <td class="option-info"><strong>要使用哪种温度单位？</strong><br/>
+                                                <small>设置仪表板的温度单位。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr id="settingsLocaleTimeRow" class="option-row">
+                                            <td class="option-control"><input id="seconds_as_time" type="checkbox" checked data-toggle="toggle"  data-on="时间" data-off="秒" data-onstyle="success" data-width="110px"></td>
+                                            <td class="option-info"><strong>将秒转换为时间？</strong><br/>
+                                                <small>当设置为 <b>时间</b> 时，呈现<code>秒</code>的图表将显示<code>DDd:HH:MM:SS</code>。
+                                                    当设置为 <b>秒</b> 时，将呈现原始秒数。
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        <tr class="option-row">
+                                            <td class="option-control"><input id="local_timezone" type="checkbox" checked data-toggle="toggle"  data-on="您的时间" data-off="服务器时间" data-onstyle="success" data-offstyle="danger" data-width="110px"></td>
+                                            <td class="option-info"><strong>显示浏览器本地时间还是服务器时间？</strong><br/>
+                                                <small>当设置为 <b>您的时间</b> 时，图表将使用您的浏览器本地时间。当设置为 <b>服务器时间</b> 时，图表将使用服务器时间。
+                                                    <br/>
+                                                    将其设置为 <b>您的时间</b> 可以获得一个共同的时间参考，无论服务器位于何处以及使用哪个时区（所有仪表板将报告您的本地时间）。
+                                                    将其设置为 <b>服务器时间</b> 可以用于将 netdata 图表与服务器日志文件进行比较。
+                                                    <br/>
+                                                    您的浏览器时区为：<b><span id="browser_timezone">-</span></b>。<br/>
+                                                    服务器报告的时区为：<b><span id="server_timezone">-</span></b>（您可以在 netdata.conf 中设置此项 <code>[global].timezone</code>）。<br/>
+                                                    仪表板上的当前时区为：<b><span id="current_timezone">-</span></b>。
+                                                    <br/>
+                                                    <div class="dropup">
+                                                        <button class="btn btn-default dropdown-toggle" type="button" id="dropdownTimeZone" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                                                            选择服务器时区
+                                                            <span class="caret"></span>
+                                                        </button>
+                                                        <ul class="dropdown-menu scrollable-menu-50" aria-labelledby="dropdownTimeZone">
+                                                            <li><a href=# onclick="return selected_server_timezone('UTC');">Universal Time Coordinated (UTC)</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Abidjan');">Africa/Abidjan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Accra');">Africa/Accra</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Algiers');">Africa/Algiers</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Bissau');">Africa/Bissau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Cairo');">Africa/Cairo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Casablanca');">Africa/Casablanca</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Ceuta');">Africa/Ceuta</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/El_Aaiun');">Africa/El_Aaiun</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Johannesburg');">Africa/Johannesburg</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Khartoum');">Africa/Khartoum</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Lagos');">Africa/Lagos</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Maputo');">Africa/Maputo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Monrovia');">Africa/Monrovia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Nairobi');">Africa/Nairobi</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Ndjamena');">Africa/Ndjamena</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Tripoli');">Africa/Tripoli</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Tunis');">Africa/Tunis</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Africa/Windhoek');">Africa/Windhoek</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Adak');">America/Adak</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Anchorage');">America/Anchorage</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Araguaina');">America/Araguaina</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Buenos_Aires');">America/Argentina/Buenos_Aires</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Catamarca');">America/Argentina/Catamarca</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Cordoba');">America/Argentina/Cordoba</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Jujuy');">America/Argentina/Jujuy</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/La_Rioja');">America/Argentina/La_Rioja</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Mendoza');">America/Argentina/Mendoza</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Rio_Gallegos');">America/Argentina/Rio_Gallegos</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Salta');">America/Argentina/Salta</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/San_Juan');">America/Argentina/San_Juan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/San_Luis');">America/Argentina/San_Luis</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Tucuman');">America/Argentina/Tucuman</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Argentina/Ushuaia');">America/Argentina/Ushuaia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Asuncion');">America/Asuncion</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Atikokan');">America/Atikokan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Bahia');">America/Bahia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Bahia_Banderas');">America/Bahia_Banderas</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Barbados');">America/Barbados</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Belem');">America/Belem</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Belize');">America/Belize</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Blanc-Sablon');">America/Blanc-Sablon</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Boa_Vista');">America/Boa_Vista</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Bogota');">America/Bogota</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Boise');">America/Boise</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Cambridge_Bay');">America/Cambridge_Bay</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Campo_Grande');">America/Campo_Grande</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Cancun');">America/Cancun</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Caracas');">America/Caracas</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Cayenne');">America/Cayenne</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Chicago');">America/Chicago</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Chihuahua');">America/Chihuahua</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Costa_Rica');">America/Costa_Rica</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Creston');">America/Creston</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Cuiaba');">America/Cuiaba</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Curacao');">America/Curacao</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Danmarkshavn');">America/Danmarkshavn</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Dawson');">America/Dawson</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Dawson_Creek');">America/Dawson_Creek</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Denver');">America/Denver</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Detroit');">America/Detroit</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Edmonton');">America/Edmonton</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Eirunepe');">America/Eirunepe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/El_Salvador');">America/El_Salvador</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Fortaleza');">America/Fortaleza</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Fort_Nelson');">America/Fort_Nelson</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Glace_Bay');">America/Glace_Bay</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Godthab');">America/Godthab</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Goose_Bay');">America/Goose_Bay</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Grand_Turk');">America/Grand_Turk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Guatemala');">America/Guatemala</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Guayaquil');">America/Guayaquil</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Guyana');">America/Guyana</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Halifax');">America/Halifax</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Havana');">America/Havana</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Hermosillo');">America/Hermosillo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Indianapolis');">America/Indiana/Indianapolis</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Knox');">America/Indiana/Knox</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Marengo');">America/Indiana/Marengo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Petersburg');">America/Indiana/Petersburg</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Tell_City');">America/Indiana/Tell_City</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Vevay');">America/Indiana/Vevay</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Vincennes');">America/Indiana/Vincennes</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Indiana/Winamac');">America/Indiana/Winamac</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Inuvik');">America/Inuvik</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Iqaluit');">America/Iqaluit</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Jamaica');">America/Jamaica</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Juneau');">America/Juneau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Kentucky/Louisville');">America/Kentucky/Louisville</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Kentucky/Monticello');">America/Kentucky/Monticello</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/La_Paz');">America/La_Paz</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Lima');">America/Lima</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Los_Angeles');">America/Los_Angeles</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Maceio');">America/Maceio</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Managua');">America/Managua</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Manaus');">America/Manaus</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Martinique');">America/Martinique</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Matamoros');">America/Matamoros</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Mazatlan');">America/Mazatlan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Menominee');">America/Menominee</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Merida');">America/Merida</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Metlakatla');">America/Metlakatla</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Mexico_City');">America/Mexico_City</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Miquelon');">America/Miquelon</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Moncton');">America/Moncton</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Monterrey');">America/Monterrey</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Montevideo');">America/Montevideo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Nassau');">America/Nassau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/New_York');">America/New_York</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Nipigon');">America/Nipigon</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Nome');">America/Nome</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Noronha');">America/Noronha</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/North_Dakota/Beulah');">America/North_Dakota/Beulah</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/North_Dakota/Center');">America/North_Dakota/Center</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/North_Dakota/New_Salem');">America/North_Dakota/New_Salem</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Ojinaga');">America/Ojinaga</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Panama');">America/Panama</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Pangnirtung');">America/Pangnirtung</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Paramaribo');">America/Paramaribo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Phoenix');">America/Phoenix</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Port-au-Prince');">America/Port-au-Prince</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Port_of_Spain');">America/Port_of_Spain</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Porto_Velho');">America/Porto_Velho</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Puerto_Rico');">America/Puerto_Rico</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Punta_Arenas');">America/Punta_Arenas</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Rainy_River');">America/Rainy_River</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Rankin_Inlet');">America/Rankin_Inlet</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Recife');">America/Recife</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Regina');">America/Regina</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Resolute');">America/Resolute</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Rio_Branco');">America/Rio_Branco</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Santarem');">America/Santarem</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Santiago');">America/Santiago</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Santo_Domingo');">America/Santo_Domingo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Sao_Paulo');">America/Sao_Paulo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Scoresbysund');">America/Scoresbysund</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Sitka');">America/Sitka</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/St_Johns');">America/St_Johns</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Swift_Current');">America/Swift_Current</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Tegucigalpa');">America/Tegucigalpa</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Thule');">America/Thule</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Thunder_Bay');">America/Thunder_Bay</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Tijuana');">America/Tijuana</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Toronto');">America/Toronto</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Vancouver');">America/Vancouver</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Whitehorse');">America/Whitehorse</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Winnipeg');">America/Winnipeg</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Yakutat');">America/Yakutat</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('America/Yellowknife');">America/Yellowknife</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Casey');">Antarctica/Casey</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Davis');">Antarctica/Davis</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/DumontDUrville');">Antarctica/DumontDUrville</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Macquarie');">Antarctica/Macquarie</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Mawson');">Antarctica/Mawson</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Palmer');">Antarctica/Palmer</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Rothera');">Antarctica/Rothera</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Syowa');">Antarctica/Syowa</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Troll');">Antarctica/Troll</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Antarctica/Vostok');">Antarctica/Vostok</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Almaty');">Asia/Almaty</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Amman');">Asia/Amman</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Anadyr');">Asia/Anadyr</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Aqtau');">Asia/Aqtau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Aqtobe');">Asia/Aqtobe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Ashgabat');">Asia/Ashgabat</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Atyrau');">Asia/Atyrau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Baghdad');">Asia/Baghdad</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Baku');">Asia/Baku</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Bangkok');">Asia/Bangkok</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Barnaul');">Asia/Barnaul</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Beirut');">Asia/Beirut</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Bishkek');">Asia/Bishkek</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Brunei');">Asia/Brunei</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Chita');">Asia/Chita</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Choibalsan');">Asia/Choibalsan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Colombo');">Asia/Colombo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Damascus');">Asia/Damascus</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Dhaka');">Asia/Dhaka</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Dili');">Asia/Dili</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Dubai');">Asia/Dubai</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Dushanbe');">Asia/Dushanbe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Famagusta');">Asia/Famagusta</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Gaza');">Asia/Gaza</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Hebron');">Asia/Hebron</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Ho_Chi_Minh');">Asia/Ho_Chi_Minh</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Hong_Kong');">Asia/Hong_Kong</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Hovd');">Asia/Hovd</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Irkutsk');">Asia/Irkutsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Jakarta');">Asia/Jakarta</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Jayapura');">Asia/Jayapura</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Jerusalem');">Asia/Jerusalem</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kabul');">Asia/Kabul</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kamchatka');">Asia/Kamchatka</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Karachi');">Asia/Karachi</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kathmandu');">Asia/Kathmandu</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Khandyga');">Asia/Khandyga</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kolkata');">Asia/Kolkata</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Krasnoyarsk');">Asia/Krasnoyarsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kuala_Lumpur');">Asia/Kuala_Lumpur</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Kuching');">Asia/Kuching</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Macau');">Asia/Macau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Magadan');">Asia/Magadan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Makassar');">Asia/Makassar</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Manila');">Asia/Manila</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Nicosia');">Asia/Nicosia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Novokuznetsk');">Asia/Novokuznetsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Novosibirsk');">Asia/Novosibirsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Omsk');">Asia/Omsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Oral');">Asia/Oral</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Pontianak');">Asia/Pontianak</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Pyongyang');">Asia/Pyongyang</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Qatar');">Asia/Qatar</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Qyzylorda');">Asia/Qyzylorda</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Riyadh');">Asia/Riyadh</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Sakhalin');">Asia/Sakhalin</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Samarkand');">Asia/Samarkand</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Seoul');">Asia/Seoul</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Shanghai');">Asia/Shanghai</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Singapore');">Asia/Singapore</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Srednekolymsk');">Asia/Srednekolymsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Taipei');">Asia/Taipei</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Tashkent');">Asia/Tashkent</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Tbilisi');">Asia/Tbilisi</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Tehran');">Asia/Tehran</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Thimphu');">Asia/Thimphu</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Tokyo');">Asia/Tokyo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Tomsk');">Asia/Tomsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Ulaanbaatar');">Asia/Ulaanbaatar</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Urumqi');">Asia/Urumqi</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Ust-Nera');">Asia/Ust-Nera</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Vladivostok');">Asia/Vladivostok</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Yakutsk');">Asia/Yakutsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Yangon');">Asia/Yangon</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Yekaterinburg');">Asia/Yekaterinburg</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Asia/Yerevan');">Asia/Yerevan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Azores');">Atlantic/Azores</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Bermuda');">Atlantic/Bermuda</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Canary');">Atlantic/Canary</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Cape_Verde');">Atlantic/Cape_Verde</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Faroe');">Atlantic/Faroe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Madeira');">Atlantic/Madeira</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Reykjavik');">Atlantic/Reykjavik</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/South_Georgia');">Atlantic/South_Georgia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Atlantic/Stanley');">Atlantic/Stanley</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Adelaide');">Australia/Adelaide</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Brisbane');">Australia/Brisbane</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Broken_Hill');">Australia/Broken_Hill</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Currie');">Australia/Currie</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Darwin');">Australia/Darwin</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Eucla');">Australia/Eucla</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Hobart');">Australia/Hobart</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Lindeman');">Australia/Lindeman</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Lord_Howe');">Australia/Lord_Howe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Melbourne');">Australia/Melbourne</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Perth');">Australia/Perth</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Australia/Sydney');">Australia/Sydney</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Amsterdam');">Europe/Amsterdam</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Andorra');">Europe/Andorra</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Astrakhan');">Europe/Astrakhan</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Athens');">Europe/Athens</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Belgrade');">Europe/Belgrade</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Berlin');">Europe/Berlin</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Brussels');">Europe/Brussels</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Bucharest');">Europe/Bucharest</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Budapest');">Europe/Budapest</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Chisinau');">Europe/Chisinau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Copenhagen');">Europe/Copenhagen</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Dublin');">Europe/Dublin</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Gibraltar');">Europe/Gibraltar</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Helsinki');">Europe/Helsinki</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Istanbul');">Europe/Istanbul</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Kaliningrad');">Europe/Kaliningrad</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Kiev');">Europe/Kiev</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Kirov');">Europe/Kirov</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Lisbon');">Europe/Lisbon</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/London');">Europe/London</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Luxembourg');">Europe/Luxembourg</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Madrid');">Europe/Madrid</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Malta');">Europe/Malta</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Minsk');">Europe/Minsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Monaco');">Europe/Monaco</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Moscow');">Europe/Moscow</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Oslo');">Europe/Oslo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Paris');">Europe/Paris</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Prague');">Europe/Prague</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Riga');">Europe/Riga</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Rome');">Europe/Rome</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Samara');">Europe/Samara</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Saratov');">Europe/Saratov</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Simferopol');">Europe/Simferopol</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Sofia');">Europe/Sofia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Stockholm');">Europe/Stockholm</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Tallinn');">Europe/Tallinn</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Tirane');">Europe/Tirane</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Ulyanovsk');">Europe/Ulyanovsk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Uzhgorod');">Europe/Uzhgorod</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Vienna');">Europe/Vienna</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Vilnius');">Europe/Vilnius</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Volgograd');">Europe/Volgograd</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Warsaw');">Europe/Warsaw</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Zaporozhye');">Europe/Zaporozhye</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Europe/Zurich');">Europe/Zurich</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Chagos');">Indian/Chagos</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Christmas');">Indian/Christmas</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Cocos');">Indian/Cocos</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Kerguelen');">Indian/Kerguelen</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Mahe');">Indian/Mahe</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Maldives');">Indian/Maldives</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Mauritius');">Indian/Mauritius</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Indian/Reunion');">Indian/Reunion</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Apia');">Pacific/Apia</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Auckland');">Pacific/Auckland</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Bougainville');">Pacific/Bougainville</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Chatham');">Pacific/Chatham</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Chuuk');">Pacific/Chuuk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Easter');">Pacific/Easter</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Efate');">Pacific/Efate</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Enderbury');">Pacific/Enderbury</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Fakaofo');">Pacific/Fakaofo</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Fiji');">Pacific/Fiji</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Funafuti');">Pacific/Funafuti</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Galapagos');">Pacific/Galapagos</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Gambier');">Pacific/Gambier</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Guadalcanal');">Pacific/Guadalcanal</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Guam');">Pacific/Guam</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Honolulu');">Pacific/Honolulu</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Kiritimati');">Pacific/Kiritimati</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Kosrae');">Pacific/Kosrae</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Kwajalein');">Pacific/Kwajalein</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Majuro');">Pacific/Majuro</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Marquesas');">Pacific/Marquesas</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Nauru');">Pacific/Nauru</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Niue');">Pacific/Niue</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Norfolk');">Pacific/Norfolk</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Noumea');">Pacific/Noumea</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Pago_Pago');">Pacific/Pago_Pago</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Palau');">Pacific/Palau</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Pitcairn');">Pacific/Pitcairn</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Pohnpei');">Pacific/Pohnpei</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Port_Moresby');">Pacific/Port_Moresby</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Rarotonga');">Pacific/Rarotonga</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Tahiti');">Pacific/Tahiti</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Tarawa');">Pacific/Tarawa</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Tongatapu');">Pacific/Tongatapu</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Wake');">Pacific/Wake</a></li>
+                                                            <li><a href=# onclick="return selected_server_timezone('Pacific/Wallis');">Pacific/Wallis</a></li>
+                                                        </ul>
+                                                    </div>
+                                                    <b><span id="timezone_error_message"></span></b>
+
+                                                </small>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="updateModalLabel">更新检查</h4>
+                </div>
+                <div class="modal-body">
+                    您的 netdata 版本: <b><code><span id="netdataVersion">未知</span></code></b><br/>
+                    <br/>
+                    <div style="padding: 10px;"></div>
+                    <div id="versionCheckLog">尚未检查。请按“立即检查”按钮。</div>
+                    <div>
+                        <hr/>
+                    </div>
+                    <div>
+                        获取进展报告和关键的 netdata 更新: <strong><a href="https://twitter.com/linuxnetdata" target="_blank">在 <i class="fab fa-twitter"></i> 推特上关注 netdata</a></strong>.
+                        <br/>
+                        您也可以 <a href="https://www.facebook.com/linuxnetdata/" target="_blank">在 <i class="fab fa-facebook"></i> 脸书上关注 netdata</a>,
+                        或者 <a href="https://github.com/netdata/netdata" target="_blank">在 <i class="fab fa-github"></i> GitHub 上关注 netdata</a>.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" onclick="notifyForUpdate(true); return false;" type="button" class="btn btn-default">立即检查</a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="signInModal" tabindex="-1" role="dialog" aria-labelledby="signInModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="signInModalLabel">登录</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        登录到 netdata.cloud 将同步您在注册表中已知的 netdata 监控节点列表
+                        <strong><span id="sim-registry"></span></strong>。这可能包括服务器主机名、URL 和标识 GUID。
+                    </p>
+                    <p>
+                        在您升级所有 netdata 服务器之后，您将不再需要私有注册表。
+                    </p>
+                    <p>
+                        您确定要继续吗？
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <a href="#" onclick="explicitlySignIn(); return false;" type="button" class="btn btn-success">登录</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="syncRegistryModal" tabindex="-1" role="dialog" aria-labelledby="syncRegistryModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="syncRegistryModalLabel">与注册表同步netdata.cloud？</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        您即将将netdata.cloud帐户与注册表中的数据进行同步，注册表位于 <strong><span id="sync-registry-modal-registry"></span></strong>。
+                        这可能包括服务器主机名、URL和标识GUID。
+                    </p>
+                    <p>
+                        您确定要继续吗？
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <a href="#" onclick="explicitlySyncAgents(); return false;" type="button" class="btn btn-success">同步</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteRegistryModal" tabindex="-1" role="dialog" aria-labelledby="deleteRegistryModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="deleteRegistryModalLabel">删除 <span id="deleteRegistryServerName"></span>？</h4>
+                </div>
+                <div class="modal-body">
+                    您即将从您的netdata服务器个人列表中删除以下服务器：
+                    <p style="text-align: center; padding-top: 10px; padding-bottom: 10px; line-height: 2;">
+                        <b><span id="deleteRegistryServerName2"></span></b>
+                        <br/>
+                        <b><span id="deleteRegistryServerURL"></span></b>
+                    </p>
+                    您确定要这样做吗？
+                    <br/>
+                    <div style="padding: 10px;"></div>
+                    <small>请记住，如果您再次访问该服务器，它将被重新添加。</small>
+                    <br/>
+                    <div id="deleteRegistryResponse" style="display: block; width: 100%; text-align: center; padding-top: 20px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">保留</button>
+                    <a href="#" onclick="notifyForDeleteRegistry(); return false;" type="button" class="btn btn-danger">删除</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="switchRegistryModal" tabindex="-1" role="dialog" aria-labelledby="switchRegistryModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="switchRegistryModalLabel">切换 Netdata 注册身份</h4>
+                </div>
+                <div class="modal-body">
+                    您可以复制并粘贴以下 ID 到您所有的浏览器（例如工作和家庭）。
+                    <br/>
+                    所有具有相同 ID 的浏览器将识别 <b>您</b>，因此请不要与他人分享此信息。
+                    <div style="text-align: center; padding-top: 10px; padding-bottom: 10px; line-height: 2;">
+                        <form action="#">
+                            <input type="text" class="form-control" id="switchRegistryPersonGUID" placeholder="您的个人 ID" maxlength="36" autocomplete="off" style="text-align: center; font-size: 1.4em;">
+                        </form>
+                    </div>
+                    要么复制此 ID 并粘贴到另一个浏览器，要么在此处粘贴您从另一个浏览器中获取的 ID。
+                    <div style="padding-top: 10px;"><small>
+                        请记住：
+                        <ul>
+                            <li>当您切换 ID 时，您的先前 ID 将永远丢失 - 这是不可逆转的。</li>
+                            <li>两个 ID（您的旧 ID 和新 ID）都必须在其个人列表中列出此 netdata。</li>
+                            <li>注册表必须知道两个 ID：<b><span id="switchRegistryURL"></span></b>。</li>
+                            <li>要获取新 ID，只需清除浏览器的 cookie。</li>
+                        </ul>
+                    </small></div>
+                    <div id="switchRegistryResponse" style="display: block; width: 100%; text-align: center; padding-top: 20px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">取消</button>
+                    <a href="#" onclick="notifyForSwitchRegistry(); return false;" type="button" class="btn btn-danger">冒充</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="gotoServerModal" tabindex="-1" role="dialog" aria-labelledby="gotoServerModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="gotoServerModalLabel"><span id="gotoServerName"></span></h4>
+                </div>
+                <div class="modal-body">
+                    检查此服务器的已知网址...
+                    <div  style="padding-top: 20px;">
+                        <table id="gotoServerList">
+                        </table>
+                    </div>
+                    <p style="padding-top: 10px;"><small>
+                        如果您正在查看的是HTTPS页面，而要检查的服务器是仅支持HTTP的，则检查可能会失败。
+                    </small></p>
+                    <div id="gotoServerResponse" style="display: block; width: 100%; text-align: center; padding-top: 20px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <iframe id="ssoifrm" width="0" height="0"></iframe>
+    <div id="hiddenDownloadLinks" style="display: none;" hidden></div>
+    <script type="text/javascript" src="dashboard.js?v20190902-0"></script>
+</body>
+</html>
